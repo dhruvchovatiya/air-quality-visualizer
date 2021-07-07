@@ -1,9 +1,10 @@
-import logo from './logo.svg';
 import './App.css';
-import { useRef, useEffect, useState } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
+import ReactDOM from 'react-dom'
 import axios from 'axios'
-import mapboxgl from 'mapbox-gl'
-import data1 from './trees.geojson'
+import mapboxgl, { Marker } from 'mapbox-gl'
+import coordinateJSON from './coordinateJSON.json'
+
 
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX
 
@@ -11,30 +12,70 @@ mapboxgl.accessToken = process.env.REACT_APP_MAPBOX
 
 function App() {
 
+  const [showCard, setShowCard] = useState(false)
+  const [properties, setProperties] = useState()
+
+  { showCard && properties && <h1>{properties.title}</h1> }
+
+  const markerClicked = (title) => {
+    console.log(title)
+    setShowCard(true)
+    setProperties(title)
+  };
+
+
+
+  const Marker = ({ onClick, children, feature }) => {
+    const _onClick = (e) => {
+      onClick(feature.properties);
+    };
+
+    return (
+
+      <div className="opacity-0 hover:opacity-100 flex-col">
+
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-6 text-gray-400 cursor-pointer" fill="black" viewBox="0 0 24 24" stroke="currentColor" onClick={_onClick}>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+
+
+      </div>
+    );
+  };
+
   const [pollutionData, setPollutionData] = useState()
+  const [seperateData, setSeperateData] = useState()
 
   useEffect(() => {
     const fetchPollutionData = async () => {
       try {
 
-        let res = await axios.get('https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69?format=json&offset=0&limit=10000&api-key='+process.env.REACT_APP_GOV)
+        let res = await axios.get('https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69?format=json&offset=0&limit=10000&api-key=' + process.env.REACT_APP_GOV)
         res = res.data.records
-        let st = new Set()
+        let mp = new Map()
         let arr = []
+        let arr2 = []
+
         for (let rec of res) {
           if (rec.pollutant_avg === 'NA') continue
+          if (!coordinateJSON[rec.station]) continue
 
-          st.add(rec.city)
-          let coord = await axios.get('https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURI(rec.station.split('-')[0] +', '+rec.state +', India') + '.json?access_token='+REACT_APP_MAPBOX)
-          // console.log(coord)
-          if(!coord || !coord.data|| !coord.data.features) continue
-          coord = coord.data.features[0].center
-   
-          arr.push({type:"Feature", geometry: {type:"Point", coordinates:coord}, properties:{'avgPoll':parseInt(rec.pollutant_avg)}})
-          // console.log(coord)
+          if (mp.has(rec.station)) {
+            arr[mp.get(rec.station)].properties.avgPoll += parseInt(rec.pollutant_avg)
+            arr2[mp.get(rec.station)].properties.pollutants.push({ pollutant_id: rec.pollutant_id, pollutant_avg: rec.pollutant_avg })
+          }
+          else {
+
+            arr2.push({ type: "Feature", properties: { place: rec.station + ", " + rec.state, last_update: rec.last_update, pollutants: [{ pollutant_id: rec.pollutant_id, pollutant_avg: rec.pollutant_avg }] }, geometry: { coordinates: coordinateJSON[rec.station], type: "Point" } })
+            arr.push({ type: "Feature", geometry: { type: "Point", coordinates: coordinateJSON[rec.station] }, properties: { 'avgPoll': parseInt(rec.pollutant_avg) } })
+            mp.set(rec.station, arr.length - 1)
+          }
         }
-        setPollutionData({type:"FeatureCollection", features: arr})
-        // console.log(pollutionData)
+        console.log({ arr, arr2 })
+        setPollutionData({ type: "FeatureCollection", features: arr })
+        setSeperateData({ type: "FeatureCollection", features: arr2 })
+
       } catch (err) {
         console.log(err)
       }
@@ -42,36 +83,24 @@ function App() {
     }
 
 
-    
+
     fetchPollutionData()
-  
-    // if (map.current) return; // initialize map only once
-    // map.current = new mapboxgl.Map({
-    //   container: mapContainer.current,
-    //   style: 'mapbox://styles/mapbox/streets-v11',
-    //   center: [lng, lat],
-    //   zoom: zoom
-    // });
-    // map.current.on('move', () => {
-    //   setLng(map.current.getCenter().lng.toFixed(4));
-    //   setLat(map.current.getCenter().lat.toFixed(4));
-    //   setZoom(map.current.getZoom().toFixed(2));
-    // });
-    
-    
-    
+
+
+
   }, [])
-  
+
   useEffect(() => {
-    console.log(pollutionData)
 
 
-  
-    if(pollutionData) {
+
+    if (pollutionData && seperateData && !map.current) {
       console.log('here')
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/dc2121dc/ckqr6uq8c402u19n2us8mv7m8',
+        // style: 'mapbox://styles/dc2121dc/ckqr6uq8c402u19n2us8mv7m8',
+        style: 'mapbox://styles/dc2121dc/ckqu1789a01xd17s298atr4el',
+
         center: [lng, lat],
         zoom: zoom
       });
@@ -82,7 +111,27 @@ function App() {
       });
 
       map.current.on('load', function () {
-    
+
+        seperateData.features.forEach((feature) => {
+          // Create a React ref
+          const ref = React.createRef();
+          // Create a new DOM node and save it to the React ref
+          ref.current = document.createElement('div');
+          // Render a Marker Component on our new DOM node
+          ReactDOM.render(
+            <Marker onClick={markerClicked} feature={feature} />,
+            ref.current
+          );
+          // Create a Mapbox Marker at our new DOM node
+          new mapboxgl.Marker(ref.current)
+            .setLngLat(feature.geometry.coordinates)
+            .addTo(map.current);
+        });
+
+        /********************************************************************************** */
+
+
+
         map.current.addSource('trees', {
           type: 'geojson',
           data: pollutionData
@@ -100,7 +149,7 @@ function App() {
               type: 'exponential',
               stops: [
                 [1, 0],
-                [150, 1]
+                [50, 1]
               ]
             },
             // increase intensity as zoom level increases
@@ -115,11 +164,11 @@ function App() {
               'interpolate',
               ['linear'],
               ['heatmap-density'],
-              0, 'rgba(236,222,239,0)',
-              0.2, 'rgb(65,105,255)',
-              0.4, 'rgb(0,255,0)',
-              0.6, 'rgb(255,255,0)',
-              0.8, 'rgb(255,0,0)'
+              0, 'rgba(25, 25, 112,0)',
+              0.2, 'rgb(53, 94, 59)',
+              0.4, 'rgb(228,155,15)',
+              0.6, 'rgb(255,140,0)',
+              0.8, 'rgb(136,8,0)'
             ],
             // increase radius as zoom increases
             'heatmap-radius': {
@@ -138,6 +187,7 @@ function App() {
             },
           }
         }, 'waterway-label');
+
         // add circle layer here
         map.current.addLayer({
           id: 'trees-point',
@@ -179,34 +229,24 @@ function App() {
             }
           }
         }, 'waterway-label');
-    
+
       });
+
     }
-  }, [pollutionData])
+  }, [pollutionData, seperateData])
 
-  // useEffect(() => {
-  //   if (!map.current) return; // wait for map to initialize
-  // });
-
-  // useEffect(() => {
-  // })
 
 
   const mapContainer = useRef(null);
   const map = useRef(null);
-  const [lng, setLng] = useState(-70.9);
-  const [lat, setLat] = useState(42.35);
-  const [zoom, setZoom] = useState(9);
+  const [lng, setLng] = useState(77.12);
+  const [lat, setLat] = useState(22.41);
+  const [zoom, setZoom] = useState(3.5);
 
 
 
   return (
     <div className="App">
-      {/* {!pollutionData && <h1>Loading...</h1>}
-      {pollutionData && pollutionData.map((rec) => (
-        <h1>{JSON.stringify(rec)}</h1>
-      ))}
-      <h1>yes</h1> */}
       <div className="sidebar">
         Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}
       </div>
