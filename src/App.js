@@ -33,6 +33,7 @@ function App() {
 
     const _onLeave = (e) => {
       setShowCard(false);
+      setProperties()
     };
 
     return (
@@ -261,7 +262,7 @@ function App() {
 
   return (
     <div className="App">
-      {!showCard && <div className="sidebar">
+      {(!showCard||!properties) && <div className="sidebar">
         Air Quality Index 
         <br/>
         (Hover/Click on any Location for Details)
