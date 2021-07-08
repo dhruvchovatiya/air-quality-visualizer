@@ -26,16 +26,19 @@ function App() {
   };
 
 
-
   const Marker = ({ onClick, children, feature }) => {
     const _onClick = (e) => {
       onClick(feature.properties);
     };
 
+    const _onLeave = (e) => {
+      setShowCard(false);
+    };
+
     return (
 
       <div className="opacity-0 hover:opacity-100 flex-col">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-6 text-gray-400 cursor-pointer" fill="black" viewBox="0 0 24 24" stroke="currentColor" onClick={_onClick} onMouseOver={_onClick} onMouseEnter={_onClick}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-6 text-gray-400 cursor-pointer" fill="black" viewBox="0 0 24 24" stroke="currentColor" onClick={_onClick} onMouseOver={_onClick} onMouseEnter={_onClick} onMouseLeave={_onLeave}>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
@@ -252,16 +255,21 @@ function App() {
       str+=arr[i].pollutant_avg
       str+=' | '
     }
-    return str.split('d')[2]
+    str = str.split('d')[2]
+    return str.slice(0,-2)
   }
 
   return (
     <div className="App">
-      <div className="sidebar">
+      {!showCard && <div className="sidebar">
+        Air Quality Index 
+        <br/>
+        (Hover/Click on any Location for Details)
+        <br/>
         Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}
-      </div>
+      </div>}
 
-        {showCard && properties && <div className="card">
+        {showCard && properties && <div className="sidebar">
           {properties.place}
           <br />
           {'Last Update: ' + properties.last_update}
