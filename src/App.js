@@ -12,15 +12,14 @@ mapboxgl.accessToken = process.env.REACT_APP_MAPBOX
 
 function App() {
 
-  const [showCard, setShowCard] = useState(false)
+  const [showCard, setShowCard] = useState(true)
   const [properties, setProperties] = useState()
 
-  { showCard && properties && <h1>{properties.title}</h1> }
 
   const markerClicked = (title) => {
-    console.log(title)
-    setShowCard(true)
+    // alert(title.place)
     setProperties(title)
+    setShowCard(true)
   };
 
 
@@ -33,8 +32,7 @@ function App() {
     return (
 
       <div className="opacity-0 hover:opacity-100 flex-col">
-
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-6 text-gray-400 cursor-pointer" fill="black" viewBox="0 0 24 24" stroke="currentColor" onClick={_onClick}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-6 text-gray-400 cursor-pointer" fill="black" viewBox="0 0 24 24" stroke="currentColor" onClick={_onClick} onMouseOver={_onClick} onMouseEnter={_onClick}>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
@@ -72,7 +70,7 @@ function App() {
             mp.set(rec.station, arr.length - 1)
           }
         }
-        console.log({ arr, arr2 })
+        // console.log({ arr, arr2 })
         setPollutionData({ type: "FeatureCollection", features: arr })
         setSeperateData({ type: "FeatureCollection", features: arr2 })
 
@@ -95,7 +93,6 @@ function App() {
 
 
     if (pollutionData && seperateData && !map.current) {
-      console.log('here')
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         // style: 'mapbox://styles/dc2121dc/ckqr6uq8c402u19n2us8mv7m8',
@@ -243,13 +240,35 @@ function App() {
   const [lat, setLat] = useState(22.41);
   const [zoom, setZoom] = useState(3.5);
 
-
+  const printArr = (arr) => {
+    let str
+    for(let i=0; i<arr.length; i++) {
+      if(!arr[i] || !arr[i].pollutant_id || !arr[i].pollutant_avg) continue 
+      str+=arr[i].pollutant_id
+      str+=':'
+      str+=arr[i].pollutant_avg
+      str+=' | '
+    }
+    return str.split('d')[2]
+  }
 
   return (
     <div className="App">
       <div className="sidebar">
         Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}
       </div>
+
+        {showCard && properties && <div className="card">
+          {properties.place}
+          <br />
+          {'Last Update: ' + properties.last_update}
+          <br />
+          {printArr(properties.pollutants)}
+          
+
+        </div>}
+
+
       <div ref={mapContainer} className="map-container" />
     </div>
   );
