@@ -1,3 +1,4 @@
+![Screenshot](https://user-images.githubusercontent.com/42826148/126744366-a5561ec7-74a3-42e4-b141-097ebacb62f7.jpeg)
 # Air Quality Visualizer for India
 
 ### Hosted on heroku - [air-quality-india.herokuapp.com](https://air-quality-india.herokuapp.com/)
