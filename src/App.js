@@ -102,8 +102,8 @@ function App() {
     if (pollutionData && seperateData && !map.current) {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        // style: 'mapbox://styles/dc2121dc/ckqr6uq8c402u19n2us8mv7m8',
-        style: 'mapbox://styles/dc2121dc/ckqu1789a01xd17s298atr4el',
+        // style: 'mapbox://styles/dc2121dc/ckqu1789a01xd17s298atr4el',
+        style: 'mapbox://styles/mapbox/dark-v10',
 
         center: [lng, lat],
         zoom: zoom
