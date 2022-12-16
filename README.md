@@ -1,6 +1,6 @@
 # Air Quality Visualizer for India
 
-### Hosted on netlify - [air-quality.netlify.app](air-quality.netlify.app)
+### Hosted on netlify - [air-quality.netlify.app](https://air-quality.netlify.app/)
 
 **_Update July26_** - Fixed
 
