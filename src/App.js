@@ -8,10 +8,7 @@ import coordinateJSON from './coordinateJSON.json'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default;
 
-
 mapboxgl.accessToken = process.env.REACT_APP_MAPBOX
-
-
 
 function App() {
 
@@ -102,8 +99,8 @@ function App() {
     if (pollutionData && seperateData && !map.current) {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        // style: 'mapbox://styles/dc2121dc/ckqu1789a01xd17s298atr4el',
-        style: 'mapbox://styles/mapbox/dark-v10',
+        style: 'mapbox://styles/dc2121dc/ckqu1789a01xd17s298atr4el',
+        // style: 'mapbox://styles/mapbox/dark-v10',
 
         center: [lng, lat],
         zoom: zoom
